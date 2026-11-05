@@ -98,7 +98,7 @@
     <input type="file" id="image-input" accept="image/*" class="hidden" onchange="handleImageUpload(event)">
   </div>
 
-  <!-- MAIN SCROLLABLE CONTAINER (Model Word Tampilan HP & PC) -->
+  <!-- MAIN SCROLLABLE CONTAINER -->
   <main id="word-viewport" class="flex-1 overflow-y-auto px-4 py-6 flex flex-col items-center">
     <div id="doc-card" class="bg-white rounded-xl border border-slate-200 p-5 sm:p-12 shadow-md w-full max-w-[850px] min-h-[80vh]">
       
@@ -107,7 +107,7 @@
         Dokumen Bersama
       </div>
       
-      <!-- Document Body Content (Kosong & Bersih) -->
+      <!-- Document Body Content -->
       <div id="doc-editor" contenteditable="false" placeholder="Mulai mengetik di sini..." class="text-slate-700 text-sm sm:text-base leading-relaxed outline-none min-h-[60vh]">
       </div>
 
@@ -158,15 +158,13 @@
       appId: "1:692080385601:web:34c51e44c937382cc870c0"
     };
 
-    let isCloudConnected = false;
     let dbRef = null;
 
     try {
       firebase.initializeApp(firebaseConfig);
       dbRef = firebase.database().ref('shared_document_1111');
-      isCloudConnected = true;
     } catch (e) {
-      console.warn("Firebase Init Error:", e);
+      console.error("Firebase Init Error:", e);
     }
 
     const SECRET_CODE = "1111";
@@ -183,43 +181,47 @@
     const passInput = document.getElementById('passcode-input');
     const authError = document.getElementById('auth-error');
 
-    // Real-Time Listener (Aktif Otomatis untuk Mode Lihat Maupun Mode Edit)
-    if (isCloudConnected && dbRef) {
-      // Pantau status koneksi socket Firebase
-      const connectedRef = firebase.database().ref('.info/connected');
-      connectedRef.on('value', (snap) => {
-        if (snap.val() === true) {
-          updateSyncStatus('Live Sync Online', 'emerald');
-        } else {
-          updateSyncStatus('Menghubungkan...', 'amber');
+    // 1. Inisialisasi awal data database jika belum ada sama sekali
+    if (dbRef) {
+      dbRef.once('value').then((snapshot) => {
+        if (!snapshot.exists()) {
+          dbRef.set({
+            title: "Dokumen Bersama",
+            content: "",
+            updatedAt: Date.now()
+          });
         }
       });
 
-      // Dengarkan perubahan data dari siapapun
+      // 2. Real-Time Listener Otomatis untuk Semua Orang (Mode Lihat & Edit)
       dbRef.on('value', (snapshot) => {
         const data = snapshot.val();
-        if (data && !isLocalUpdating) {
-          if (data.title !== undefined && docTitle.innerText !== data.title) {
-            docTitle.innerText = data.title;
+        if (data) {
+          // Update teks judul dan isi secara live jika bukan pengetikan lokal sendiri
+          if (!isLocalUpdating) {
+            if (data.title !== undefined && docTitle.innerText !== data.title) {
+              docTitle.innerText = data.title;
+            }
+            if (data.content !== undefined && docEditor.innerHTML !== data.content) {
+              docEditor.innerHTML = data.content;
+            }
           }
-          if (data.content !== undefined && docEditor.innerHTML !== data.content) {
-            docEditor.innerHTML = data.content;
-          }
+          updateSyncStatus('Live Sync Online', 'emerald');
         }
+      }, (error) => {
+        updateSyncStatus('Koneksi Terputus', 'rose');
       });
     } else {
-      updateSyncStatus('Mode Lokal Offline', 'amber');
+      updateSyncStatus('Offline', 'rose');
     }
 
     function saveToCloud(title, content) {
-      if (!isEditMode) return;
-      if (isCloudConnected && dbRef) {
-        dbRef.set({
-          title: title,
-          content: content,
-          updatedAt: Date.now()
-        });
-      }
+      if (!isEditMode || !dbRef) return;
+      dbRef.set({
+        title: title,
+        content: content,
+        updatedAt: Date.now()
+      });
     }
 
     function setupEditorListeners() {
@@ -227,7 +229,7 @@
         if (!isEditMode) return;
         isLocalUpdating = true;
         saveToCloud(docTitle.innerText, docEditor.innerHTML);
-        setTimeout(() => { isLocalUpdating = false; }, 300);
+        setTimeout(() => { isLocalUpdating = false; }, 200);
       };
       docTitle.addEventListener('input', handleInput);
       docEditor.addEventListener('input', handleInput);
