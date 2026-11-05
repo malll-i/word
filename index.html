@@ -13,7 +13,6 @@
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
   <style>
-    /* Infinite Canvas Background Grid */
     .infinite-grid {
       background-size: 24px 24px;
       background-image: 
@@ -21,7 +20,6 @@
         linear-gradient(to bottom, rgba(226, 232, 240, 0.6) 1px, transparent 1px);
     }
     
-    /* Rich Text Editor Placeholder */
     [contenteditable]:empty:before {
       content: attr(placeholder);
       color: #9ca3af;
@@ -29,7 +27,6 @@
       display: block;
     }
 
-    /* Custom Scrollbar */
     ::-webkit-scrollbar {
       width: 4px;
       height: 4px;
@@ -71,7 +68,7 @@
       </div>
 
       <!-- Auth Button -->
-      <button id="btn-auth" onclick="toggleAuthModal()" class="flex items-center px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs sm:text-sm font-medium transition duration-200 shadow-sm">
+      <button id="btn-auth" type="button" onclick="handleAuthButtonClick()" class="flex items-center px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs sm:text-sm font-medium transition duration-200 shadow-sm">
         <i data-lucide="lock" class="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1 sm:mr-1.5"></i>
         <span id="btn-auth-text">Kode Edit</span>
       </button>
@@ -80,24 +77,24 @@
 
   <!-- WORKSPACE TOOLBAR -->
   <div id="editor-toolbar" class="bg-white border-b border-slate-200 px-3 py-1.5 flex items-center overflow-x-auto space-x-1 text-slate-400 pointer-events-none opacity-50 transition-all z-20 shrink-0">
-    <button onclick="execCmd('bold')" title="Tebal" class="p-2 hover:bg-slate-100 rounded text-slate-700 shrink-0">
+    <button type="button" onclick="execCmd('bold')" title="Tebal" class="p-2 hover:bg-slate-100 rounded text-slate-700 shrink-0">
       <i data-lucide="bold" class="w-4 h-4"></i>
     </button>
-    <button onclick="execCmd('italic')" title="Miring" class="p-2 hover:bg-slate-100 rounded text-slate-700 shrink-0">
+    <button type="button" onclick="execCmd('italic')" title="Miring" class="p-2 hover:bg-slate-100 rounded text-slate-700 shrink-0">
       <i data-lucide="italic" class="w-4 h-4"></i>
     </button>
-    <button onclick="execCmd('underline')" title="Garis Bawah" class="p-2 hover:bg-slate-100 rounded text-slate-700 shrink-0">
+    <button type="button" onclick="execCmd('underline')" title="Garis Bawah" class="p-2 hover:bg-slate-100 rounded text-slate-700 shrink-0">
       <i data-lucide="underline" class="w-4 h-4"></i>
     </button>
     <div class="h-4 w-px bg-slate-200 mx-1 shrink-0"></div>
-    <button onclick="execCmd('insertUnorderedList')" title="Bullet List" class="p-2 hover:bg-slate-100 rounded text-slate-700 shrink-0">
+    <button type="button" onclick="execCmd('insertUnorderedList')" title="Bullet List" class="p-2 hover:bg-slate-100 rounded text-slate-700 shrink-0">
       <i data-lucide="list" class="w-4 h-4"></i>
     </button>
-    <button onclick="execCmd('insertOrderedList')" title="Numbered List" class="p-2 hover:bg-slate-100 rounded text-slate-700 shrink-0">
+    <button type="button" onclick="execCmd('insertOrderedList')" title="Numbered List" class="p-2 hover:bg-slate-100 rounded text-slate-700 shrink-0">
       <i data-lucide="list-ordered" class="w-4 h-4"></i>
     </button>
     <div class="h-4 w-px bg-slate-200 mx-1 shrink-0"></div>
-    <button onclick="triggerImageUpload()" class="p-1.5 hover:bg-slate-100 rounded text-slate-700 flex items-center space-x-1 text-xs font-medium shrink-0">
+    <button type="button" onclick="triggerImageUpload()" class="p-1.5 hover:bg-slate-100 rounded text-slate-700 flex items-center space-x-1 text-xs font-medium shrink-0">
       <i data-lucide="image" class="w-4 h-4"></i>
       <span>Gambar</span>
     </button>
@@ -118,11 +115,11 @@
 
     <!-- Zoom Controls -->
     <div class="absolute bottom-4 right-4 bg-white/90 backdrop-blur border border-slate-200 rounded-lg shadow-lg flex items-center space-x-1 p-1 z-20">
-      <button onclick="zoomOut()" class="p-2 hover:bg-slate-100 rounded text-slate-600"><i data-lucide="minus" class="w-4 h-4"></i></button>
+      <button type="button" onclick="zoomOut()" class="p-2 hover:bg-slate-100 rounded text-slate-600"><i data-lucide="minus" class="w-4 h-4"></i></button>
       <span id="zoom-level" class="text-xs font-semibold px-1 min-w-[36px] text-center text-slate-700">100%</span>
-      <button onclick="zoomIn()" class="p-2 hover:bg-slate-100 rounded text-slate-600"><i data-lucide="plus" class="w-4 h-4"></i></button>
+      <button type="button" onclick="zoomIn()" class="p-2 hover:bg-slate-100 rounded text-slate-600"><i data-lucide="plus" class="w-4 h-4"></i></button>
       <div class="h-4 w-px bg-slate-200 mx-0.5"></div>
-      <button onclick="resetView()" class="p-2 hover:bg-slate-100 rounded text-slate-600" title="Reset Tampilan"><i data-lucide="rotate-ccw" class="w-4 h-4"></i></button>
+      <button type="button" onclick="resetView()" class="p-2 hover:bg-slate-100 rounded text-slate-600" title="Reset Tampilan"><i data-lucide="rotate-ccw" class="w-4 h-4"></i></button>
     </div>
   </main>
 
@@ -134,20 +131,20 @@
           <i data-lucide="key-round" class="w-5 h-5"></i>
         </div>
         <h3 class="text-base font-bold text-slate-900">Akses Mode Edit</h3>
-        <p class="text-xs text-slate-500 mt-1">Masukkan kode 4-digit untuk mulai mengetik dan mengedit.</p>
+        <p class="text-xs text-slate-500 mt-1">Masukkan kode 4-digit untuk mulai mengetik.</p>
       </div>
 
       <div class="space-y-3">
         <div>
-          <input type="password" id="passcode-input" maxlength="10" placeholder="••••" onkeydown="if(event.key === 'Enter') verifyPasscode()" class="w-full px-3 py-2 text-center text-xl tracking-widest font-mono border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-          <p id="auth-error" class="text-xs text-rose-500 text-center mt-1 hidden">Kode salah!</p>
+          <input type="password" id="passcode-input" maxlength="10" placeholder="••••" class="w-full px-3 py-2 text-center text-xl tracking-widest font-mono border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+          <p id="auth-error" class="text-xs text-rose-500 text-center mt-1 hidden">Kode salah! Coba ketik 1111</p>
         </div>
 
         <div class="flex space-x-2">
-          <button type="button" onclick="toggleAuthModal()" class="w-1/2 py-2 border border-slate-300 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-50">
+          <button type="button" onclick="closeAuthModal()" class="w-1/2 py-2 border border-slate-300 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-50">
             Batal
           </button>
-          <button type="button" onclick="verifyPasscode()" class="w-1/2 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-medium shadow-sm">
+          <button type="button" onclick="verifyPasscodeDirectly()" class="w-1/2 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-medium shadow-sm">
             Masuk
           </button>
         </div>
@@ -191,6 +188,9 @@
     const modeBadge = document.getElementById('mode-badge');
     const btnAuthText = document.getElementById('btn-auth-text');
     const editorToolbar = document.getElementById('editor-toolbar');
+    const authModal = document.getElementById('auth-modal');
+    const passInput = document.getElementById('passcode-input');
+    const authError = document.getElementById('auth-error');
 
     if (isCloudConnected && docRef) {
       docRef.onSnapshot((doc) => {
@@ -246,50 +246,69 @@
       syncStatus.innerHTML = `<span class="w-1.5 h-1.5 rounded-full ${bgClass} mr-1 animate-pulse"></span>${text}`;
     }
 
-    // Modal & Verifikasi Kode (1111)
-    function toggleAuthModal() {
-      const modal = document.getElementById('auth-modal');
-      const input = document.getElementById('passcode-input');
-      const error = document.getElementById('auth-error');
-
+    // AUTHENTICATION LOGIC (LANGSUNG KUNCI / BUKA MODAL)
+    function handleAuthButtonClick() {
       if (isEditMode) {
         setEditMode(false);
       } else {
-        modal.classList.toggle('hidden');
-        if (!modal.classList.contains('hidden')) {
-          input.value = '';
-          error.classList.add('hidden');
-          setTimeout(() => input.focus(), 100);
-        }
+        openAuthModal();
       }
     }
 
-    function verifyPasscode() {
-      const inputVal = document.getElementById('passcode-input').value.trim();
-      const error = document.getElementById('auth-error');
+    function openAuthModal() {
+      authModal.classList.remove('hidden');
+      passInput.value = '';
+      authError.classList.add('hidden');
+      setTimeout(() => passInput.focus(), 150);
+    }
 
-      if (inputVal === SECRET_CODE) {
+    function closeAuthModal() {
+      authModal.classList.add('hidden');
+    }
+
+    function verifyPasscodeDirectly() {
+      const enteredPass = passInput.value.trim();
+
+      if (enteredPass === SECRET_CODE) {
+        closeAuthModal();
         setEditMode(true);
-        toggleAuthModal();
       } else {
-        error.classList.remove('hidden');
+        authError.classList.remove('hidden');
       }
     }
+
+    // BISA JUGA DENGAN MENEKAN TOMBOL ENTER PADA KEYBOARD
+    passInput.addEventListener('keyup', function(event) {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        verifyPasscodeDirectly();
+      }
+    });
 
     function setEditMode(enabled) {
       isEditMode = enabled;
+
       if (enabled) {
-        docTitle.contentEditable = "true";
-        docEditor.contentEditable = "true";
+        docTitle.setAttribute('contenteditable', 'true');
+        docEditor.setAttribute('contenteditable', 'true');
+        
         modeBadge.className = "px-2 py-1 rounded-full text-[10px] sm:text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200 flex items-center";
         modeBadge.innerHTML = `<i data-lucide="edit-3" class="w-3 h-3 mr-1"></i> Mode Edit`;
+        
         btnAuthText.innerText = "Kunci";
         editorToolbar.classList.remove('pointer-events-none', 'opacity-50');
+
+        // Otomatis fokus ke tempat ngetik
+        setTimeout(() => {
+          docEditor.focus();
+        }, 100);
       } else {
-        docTitle.contentEditable = "false";
-        docEditor.contentEditable = "false";
+        docTitle.setAttribute('contenteditable', 'false');
+        docEditor.setAttribute('contenteditable', 'false');
+        
         modeBadge.className = "px-2 py-1 rounded-full text-[10px] sm:text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200 flex items-center";
         modeBadge.innerHTML = `<i data-lucide="eye" class="w-3 h-3 mr-1"></i> <span class="hidden sm:inline">Mode </span>Lihat`;
+        
         btnAuthText.innerText = "Kode Edit";
         editorToolbar.classList.add('pointer-events-none', 'opacity-50');
       }
