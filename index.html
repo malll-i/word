@@ -174,7 +174,7 @@
         </h3>
         <div class="bg-slate-50 border border-slate-200 rounded-lg p-3 sm:p-4 max-h-[360px] overflow-y-auto">
           <div id="udunan-list" class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <!-- 32 Item Nama & Checkbox di-generate oleh JS -->
+            <!-- 32 Item Nama Sesuai Abjad (Fix Tanpa Diedit Namanya) di-generate oleh JS -->
           </div>
         </div>
       </section>
@@ -276,7 +276,6 @@
   <script>
     lucide.createIcons();
 
-    // KONFIGURASI FIREBASE SESUAI PROYEK ANDA
     const firebaseConfig = {
       apiKey: "AIzaSyCanbPKgL9lWVcahv543bnFKrigKUunFze",
       authDomain: "word-b7629.firebaseapp.com",
@@ -317,23 +316,57 @@
     const passInput = document.getElementById('passcode-input');
     const authError = document.getElementById('auth-error');
 
+    // Daftar 32 Nama Sesuai Abjad & Formal
+    const fixedNames = [
+      "Akmal Nurjaman",
+      "Aliya Afifah",
+      "Azkiya Nur'Azizah",
+      "Chelsy Nur Maghfira",
+      "Citra Azqia Putri",
+      "Diaz Putri Qirenia",
+      "Dinda Aprillia Dwi Fauziah",
+      "Evan Tri Ramos",
+      "Fanny Maulani Fadhilah",
+      "Ginna Oktaviani",
+      "Indra Cahyadisepta",
+      "Intan Silvani Aulia",
+      "Kinnaya Siti Aqilasyah",
+      "Malona Putri Hutapea",
+      "Mikail Aqiela Nabhan",
+      "Moch Fardhan Ardiansyah",
+      "Muhammad Deva Ramdani",
+      "Muhammad Randy Maulana",
+      "Muhammad Rifansyah",
+      "Nadya Nur Hafifah",
+      "Raden Muhammad Bryenth Allinsky",
+      "Raishalia Shafa Sugiharto",
+      "Rayhan Saeful Kanzaki Arsa",
+      "Reggy Rachmattilah",
+      "Rianty Aulia Puteri",
+      "Riza Achmad Fauzan",
+      "Tenty Yulia",
+      "Tsuraya Luthfika Raudhotul Jannah",
+      "Ulfah Syabaniah",
+      "Wirya Fakih Agustian",
+      "Zibril Anugrah Alifansyah"
+    ];
+
     const udunanListEl = document.getElementById('udunan-list');
     let udunanData = {};
 
     function initUdunanGrid() {
       udunanListEl.innerHTML = '';
-      for (let i = 1; i <= 32; i++) {
+      fixedNames.forEach((fullName, idx) => {
+        const i = idx + 1;
         const itemKey = `person_${i}`;
-        const itemData = udunanData[itemKey] || { name: `Anggota ${i}`, checked: false };
+        const itemData = udunanData[itemKey] || { checked: false };
         
         const div = document.createElement('div');
         div.className = "flex items-center justify-between p-2 bg-white rounded border border-slate-200 text-xs";
         div.innerHTML = `
           <div class="flex items-center space-x-1.5 flex-1 mr-2 overflow-hidden">
             <span class="font-bold text-slate-400 w-5 shrink-0">${i}.</span>
-            <span id="udunan-name-${i}" contenteditable="${isEditModeKeuangan}" placeholder="Nama..." oninput="handleUdunanNameChange(${i}, this.innerText)" class="font-medium text-slate-800 outline-none truncate flex-1 ${isEditModeKeuangan ? 'border-b border-indigo-200 focus:border-indigo-500' : ''}">
-              ${itemData.name}
-            </span>
+            <span class="font-medium text-slate-800 truncate flex-1">${fullName}</span>
           </div>
           <label class="flex items-center space-x-1 shrink-0 cursor-pointer ${!isEditModeKeuangan ? 'pointer-events-none opacity-80' : ''}">
             <span class="text-[11px] font-semibold text-slate-600">Udunan</span>
@@ -341,10 +374,9 @@
           </label>
         `;
         udunanListEl.appendChild(div);
-      }
+      });
     }
 
-    // SYNC FIREBASE - NASKAH
     if (dbRefDoc) {
       dbRefDoc.once('value').then((snapshot) => {
         if (!snapshot.exists()) {
@@ -366,7 +398,6 @@
       }, () => updateSyncStatus('Koneksi Terputus', 'rose'));
     }
 
-    // SYNC FIREBASE - KEUANGAN (Mencegah reset fokus saat mengetik nama)
     let financeItems = [];
     if (dbRefFinance) {
       dbRefFinance.on('value', (snapshot) => {
@@ -411,18 +442,10 @@
     }
     setupEditorListeners();
 
-    function handleUdunanNameChange(index, newName) {
-      if (!isEditModeKeuangan) return;
-      const key = `person_${index}`;
-      if (!udunanData[key]) udunanData[key] = { checked: false };
-      udunanData[key].name = newName;
-      saveFinanceToCloud();
-    }
-
     function handleUdunanCheckChange(index, isChecked) {
       if (!isEditModeKeuangan) return;
       const key = `person_${index}`;
-      if (!udunanData[key]) udunanData[key] = { name: `Anggota ${index}` };
+      if (!udunanData[key]) udunanData[key] = {};
       udunanData[key].checked = isChecked;
       saveFinanceToCloud();
     }
