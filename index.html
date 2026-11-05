@@ -40,8 +40,8 @@
 </head>
 <body class="font-sans text-slate-800 antialiased h-screen w-screen overflow-hidden flex flex-col select-none">
 
-  <!-- TOP NAVBAR -->
-  <header class="bg-white border-b border-slate-200 px-3 sm:px-6 py-2.5 flex items-center justify-between z-30 shrink-0 shadow-sm">
+  <!-- TOP NAVBAR (Sticky / Tetap di Atas) -->
+  <header class="bg-white border-b border-slate-200 px-3 sm:px-6 py-2.5 flex items-center justify-between z-40 shrink-0 shadow-sm">
     <div class="flex items-center space-x-2">
       <div class="p-1.5 bg-indigo-600 rounded-lg text-white">
         <i data-lucide="file-text" class="w-4 h-4 sm:w-5 sm:h-5"></i>
@@ -72,8 +72,8 @@
     </div>
   </header>
 
-  <!-- WORKSPACE TOOLBAR -->
-  <div id="editor-toolbar" class="bg-white border-b border-slate-200 px-3 py-1.5 flex items-center overflow-x-auto space-x-1 text-slate-400 pointer-events-none opacity-50 transition-all z-20 shrink-0">
+  <!-- WORKSPACE TOOLBAR (Sticky di Bawah Navbar) -->
+  <div id="editor-toolbar" class="bg-white border-b border-slate-200 px-3 py-1.5 flex items-center overflow-x-auto space-x-1 text-slate-400 pointer-events-none opacity-50 transition-all z-30 shrink-0 shadow-sm">
     <button type="button" onclick="execCmd('bold')" title="Tebal" class="p-2 hover:bg-slate-100 rounded text-slate-700 shrink-0">
       <i data-lucide="bold" class="w-4 h-4"></i>
     </button>
