@@ -40,7 +40,7 @@
 </head>
 <body class="font-sans text-slate-800 antialiased h-screen w-screen overflow-hidden flex flex-col select-none">
 
-  <!-- TOP NAVBAR (Sticky / Tetap di Atas) -->
+  <!-- TOP NAVBAR -->
   <header class="bg-white border-b border-slate-200 px-3 sm:px-6 py-2.5 flex items-center justify-between z-40 shrink-0 shadow-sm">
     <div class="flex items-center space-x-2">
       <div class="p-1.5 bg-indigo-600 rounded-lg text-white">
@@ -72,7 +72,7 @@
     </div>
   </header>
 
-  <!-- WORKSPACE TOOLBAR (Sticky di Bawah Navbar) -->
+  <!-- WORKSPACE TOOLBAR -->
   <div id="editor-toolbar" class="bg-white border-b border-slate-200 px-3 py-1.5 flex items-center overflow-x-auto space-x-1 text-slate-400 pointer-events-none opacity-50 transition-all z-30 shrink-0 shadow-sm">
     <button type="button" onclick="execCmd('bold')" title="Tebal" class="p-2 hover:bg-slate-100 rounded text-slate-700 shrink-0">
       <i data-lucide="bold" class="w-4 h-4"></i>
@@ -100,15 +100,16 @@
 
   <!-- MAIN SCROLLABLE CONTAINER -->
   <main id="word-viewport" class="flex-1 overflow-y-auto px-4 py-6 flex flex-col items-center">
-    <div id="doc-card" class="bg-white rounded-xl border border-slate-200 p-5 sm:p-12 shadow-md w-full max-w-[850px] min-h-[80vh]">
+    <!-- Kertas Putih Otomatis Menyesuaikan Tinggi Teks -->
+    <div id="doc-card" class="bg-white rounded-xl border border-slate-200 p-5 sm:p-12 shadow-md w-full max-w-[850px] mb-12 flex flex-col">
       
       <!-- Document Title -->
-      <div id="doc-title" contenteditable="false" placeholder="Judul Dokumen..." class="text-2xl sm:text-3xl font-extrabold text-slate-900 outline-none mb-6 border-b border-transparent focus:border-slate-200 pb-2">
+      <div id="doc-title" contenteditable="false" placeholder="Judul Dokumen..." class="text-2xl sm:text-3xl font-extrabold text-slate-900 outline-none mb-6 border-b border-transparent focus:border-slate-200 pb-2 shrink-0">
         Dokumen Bersama
       </div>
       
       <!-- Document Body Content -->
-      <div id="doc-editor" contenteditable="false" placeholder="Mulai mengetik di sini..." class="text-slate-700 text-sm sm:text-base leading-relaxed outline-none min-h-[60vh]">
+      <div id="doc-editor" contenteditable="false" placeholder="Mulai mengetik di sini..." class="text-slate-700 text-sm sm:text-base leading-relaxed outline-none flex-1 min-h-[50vh]">
       </div>
 
     </div>
@@ -182,7 +183,6 @@
     const authError = document.getElementById('auth-error');
 
     if (dbRef) {
-      // Inisialisasi data default otomatis jika database kosong
       dbRef.once('value').then((snapshot) => {
         if (!snapshot.exists()) {
           dbRef.set({
@@ -193,7 +193,6 @@
         }
       });
 
-      // Real-Time Listener untuk semua pengguna (Mode Lihat & Edit)
       dbRef.on('value', (snapshot) => {
         const data = snapshot.val();
         if (data) {
@@ -268,7 +267,7 @@
         closeAuthModal();
         setEditMode(true);
       } else {
-        authError.classList.remove('hidden');
+        authError.classList.add('hidden');
       }
     }
 
