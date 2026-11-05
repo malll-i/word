@@ -599,6 +599,45 @@
       }, 200);
     }
 
+    // SWIPE GESTURE DETECTOR UNTUK HP
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchEndX = 0;
+    let touchEndY = 0;
+
+    const viewportEl = document.getElementById('word-viewport');
+
+    viewportEl.addEventListener('touchstart', (e) => {
+      touchStartX = e.changedTouches[0].screenX;
+      touchStartY = e.changedTouches[0].screenY;
+    }, { passive: true });
+
+    viewportEl.addEventListener('touchend', (e) => {
+      touchEndX = e.changedTouches[0].screenX;
+      touchEndY = e.changedTouches[0].screenY;
+      handleSwipeGesture();
+    }, { passive: true });
+
+    function handleSwipeGesture() {
+      const diffX = touchEndX - touchStartX;
+      const diffY = touchEndY - touchStartY;
+
+      // Abaikan jika gerakan lebih banyak vertikal (scroll halaman biasa)
+      if (Math.abs(diffY) > Math.abs(diffX)) return;
+
+      // Ambang batas geseran minimal 60px
+      if (Math.abs(diffX) > 60) {
+        // Geser ke Kiri (Next: Naskah -> Keuangan)
+        if (diffX < 0 && activePage === 'naskah') {
+          switchPage('keuangan');
+        }
+        // Geser ke Kanan (Prev: Keuangan -> Naskah)
+        else if (diffX > 0 && activePage === 'keuangan') {
+          switchPage('naskah');
+        }
+      }
+    }
+
     function handleAuthButtonClick() {
       const currentEditState = activePage === 'naskah' ? isEditModeNaskah : isEditModeKeuangan;
       if (currentEditState) {
