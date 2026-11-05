@@ -72,7 +72,7 @@
     </div>
   </header>
 
-  <!-- WORKSPACE TOOLBAR (Terbagi 2 Tab: Naskah & Keuangan) -->
+  <!-- WORKSPACE TOOLBAR -->
   <div class="bg-white border-b border-slate-200 px-3 py-1.5 flex items-center justify-between overflow-x-auto text-slate-700 z-30 shrink-0 shadow-sm">
     
     <!-- Toolbar Naskah -->
@@ -137,7 +137,7 @@
       <input type="file" id="image-input" accept="image/*" class="hidden" onchange="handleImageUpload(event)">
     </div>
 
-    <!-- Navigasi Halaman (Pojok Kanan Toolbar) -->
+    <!-- Navigasi Halaman -->
     <div class="flex items-center space-x-1 ml-auto shrink-0 pl-2">
       <button id="tab-naskah" type="button" onclick="switchPage('naskah')" class="px-2.5 py-1 text-xs font-semibold rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200 flex items-center">
         <i data-lucide="file-text" class="w-3.5 h-3.5 mr-1"></i> Naskah
@@ -243,7 +243,7 @@
 
   </main>
 
-  <!-- AUTH MODAL (PASSCODE: NASKAH 1111 / KEUANGAN 0000) -->
+  <!-- AUTH MODAL -->
   <div id="auth-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 hidden">
     <div class="bg-white rounded-xl shadow-2xl border border-slate-100 p-5 w-full max-w-xs transform transition-all">
       <div class="text-center mb-4">
@@ -298,16 +298,15 @@
       console.error("Firebase Init Error:", e);
     }
 
-    // PIN CODE CONFIG
     const CODE_NASKAH = "1111";
     const CODE_KEUANGAN = "0000";
 
-    let activePage = "naskah"; // "naskah" atau "keuangan"
+    let activePage = "naskah";
     let isEditModeNaskah = false;
     let isEditModeKeuangan = false;
     let isLocalUpdatingDoc = false;
+    let isLocalUpdatingFinance = false;
 
-    // DOM Elements
     const docTitle = document.getElementById('doc-title');
     const docEditor = document.getElementById('doc-editor');
     const syncStatus = document.getElementById('sync-status');
@@ -318,7 +317,6 @@
     const passInput = document.getElementById('passcode-input');
     const authError = document.getElementById('auth-error');
 
-    // Generate 32 Item Udunan
     const udunanListEl = document.getElementById('udunan-list');
     let udunanData = {};
 
@@ -339,14 +337,14 @@
           </div>
           <label class="flex items-center space-x-1 shrink-0 cursor-pointer ${!isEditModeKeuangan ? 'pointer-events-none opacity-80' : ''}">
             <span class="text-[11px] font-semibold text-slate-600">Udunan</span>
-            <input type="checkbox" ${itemData.checked ? 'checked' : ''} ${!isEditModeKeuangan ? 'disabled' : ''} onchange="handleUdunanCheckChange(${i}, this.checked)" class="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500">
+            <input type="checkbox" id="udunan-check-${i}" ${itemData.checked ? 'checked' : ''} ${!isEditModeKeuangan ? 'disabled' : ''} onchange="handleUdunanCheckChange(${i}, this.checked)" class="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500">
           </label>
         `;
         udunanListEl.appendChild(div);
       }
     }
 
-    // 1. SYNC REALTIME FIREBASE - NASKAH (1111)
+    // SYNC FIREBASE - NASKAH
     if (dbRefDoc) {
       dbRefDoc.once('value').then((snapshot) => {
         if (!snapshot.exists()) {
@@ -368,7 +366,7 @@
       }, () => updateSyncStatus('Koneksi Terputus', 'rose'));
     }
 
-    // 2. SYNC REALTIME FIREBASE - KEUANGAN (0000)
+    // SYNC FIREBASE - KEUANGAN (Mencegah reset fokus saat mengetik nama)
     let financeItems = [];
     if (dbRefFinance) {
       dbRefFinance.on('value', (snapshot) => {
@@ -376,25 +374,28 @@
         udunanData = data.udunan || {};
         financeItems = data.items || [];
         
-        initUdunanGrid();
+        if (!isLocalUpdatingFinance) {
+          initUdunanGrid();
+        }
         renderFinanceHistory();
         updateSyncStatus('Live Sync Online', 'emerald');
       });
     }
 
-    // SAVE CLOUD NASKAH
     function saveDocToCloud(title, content) {
       if (!isEditModeNaskah || !dbRefDoc) return;
       dbRefDoc.set({ title: title, content: content, updatedAt: Date.now() });
     }
 
-    // SAVE CLOUD KEUANGAN
     function saveFinanceToCloud() {
       if (!isEditModeKeuangan || !dbRefFinance) return;
+      isLocalUpdatingFinance = true;
       dbRefFinance.set({
         udunan: udunanData,
         items: financeItems,
         updatedAt: Date.now()
+      }).then(() => {
+        setTimeout(() => { isLocalUpdatingFinance = false; }, 300);
       });
     }
 
@@ -410,7 +411,6 @@
     }
     setupEditorListeners();
 
-    // HANDLER KEUANGAN & UDUNAN
     function handleUdunanNameChange(index, newName) {
       if (!isEditModeKeuangan) return;
       const key = `person_${index}`;
@@ -497,7 +497,6 @@
       lucide.createIcons();
     }
 
-    // SWITCH PAGE SYSTEM
     function switchPage(page) {
       activePage = page;
       const tabNaskah = document.getElementById('tab-naskah');
@@ -536,7 +535,6 @@
       syncStatus.innerHTML = `<span class="w-1.5 h-1.5 rounded-full ${bgClass} mr-1 animate-pulse"></span>${text}`;
     }
 
-    // AUTH SYSTEM (1111 for Naskah, 0000 for Keuangan)
     function handleAuthButtonClick() {
       const currentEditState = activePage === 'naskah' ? isEditModeNaskah : isEditModeKeuangan;
       if (currentEditState) {
@@ -644,7 +642,6 @@
       e.target.value = '';
     }
 
-    // Inisialisasi awal
     initUdunanGrid();
     renderFinanceHistory();
     document.getElementById('btn-save-finance').classList.add('pointer-events-none', 'opacity-50');
