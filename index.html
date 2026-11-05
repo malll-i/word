@@ -47,7 +47,7 @@
         <i data-lucide="file-text" class="w-4 h-4 sm:w-5 sm:h-5"></i>
       </div>
       <div>
-        <h1 class="font-bold text-slate-900 text-sm sm:text-base leading-tight">Live Workspace</h1>
+        <h1 class="font-bold text-slate-900 text-sm sm:text-base leading-tight">Naskah Teater</h1>
         <div class="flex items-center text-[10px] sm:text-xs">
           <span id="sync-status" class="flex items-center text-amber-600 font-medium">
             <span class="w-1.5 h-1.5 rounded-full bg-amber-500 mr-1 animate-pulse"></span>
@@ -74,6 +74,10 @@
 
   <!-- WORKSPACE TOOLBAR -->
   <div id="editor-toolbar" class="bg-white border-b border-slate-200 px-3 py-1.5 flex items-center overflow-x-auto space-x-1 text-slate-400 pointer-events-none opacity-50 transition-all z-30 shrink-0 shadow-sm">
+    <button type="button" onclick="execCmd('undo')" title="Undo" class="p-2 hover:bg-slate-100 rounded text-slate-700 shrink-0">
+      <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+    </button>
+    <div class="h-4 w-px bg-slate-200 mx-1 shrink-0"></div>
     <button type="button" onclick="execCmd('bold')" title="Tebal" class="p-2 hover:bg-slate-100 rounded text-slate-700 shrink-0">
       <i data-lucide="bold" class="w-4 h-4"></i>
     </button>
@@ -105,7 +109,7 @@
       
       <!-- Document Title -->
       <div id="doc-title" contenteditable="false" placeholder="Judul Dokumen..." class="text-2xl sm:text-3xl font-extrabold text-slate-900 outline-none mb-6 border-b border-transparent focus:border-slate-200 pb-2 shrink-0">
-        Dokumen Bersama
+        Naskah Teater
       </div>
       
       <!-- Document Body Content -->
@@ -186,7 +190,7 @@
       dbRef.once('value').then((snapshot) => {
         if (!snapshot.exists()) {
           dbRef.set({
-            title: "Dokumen Bersama",
+            title: "Naskah Teater",
             content: "",
             updatedAt: Date.now()
           });
