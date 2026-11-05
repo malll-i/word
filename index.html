@@ -291,13 +291,13 @@
 
     try {
       firebase.initializeApp(firebaseConfig);
-      dbRefDoc = firebase.database().ref('shared_document_1111');
+      dbRefDoc = firebase.database().ref('shared_document_9999');
       dbRefFinance = firebase.database().ref('shared_finance_0000');
     } catch (e) {
       console.error("Firebase Init Error:", e);
     }
 
-    const CODE_NASKAH = "1111";
+    const CODE_NASKAH = "9999";
     const CODE_KEUANGAN = "0000";
 
     let activePage = "naskah";
@@ -316,8 +316,9 @@
     const passInput = document.getElementById('passcode-input');
     const authError = document.getElementById('auth-error');
 
-    // Daftar 32 Nama Sesuai Abjad & Formal
+    // Daftar 32 Nama Sesuai Abjad & Formal (Termasuk Apif Patoni)
     const fixedNames = [
+      "Apif Patoni",
       "Akmal Nurjaman",
       "Aliya Afifah",
       "Azkiya Nur'Azizah",
@@ -577,10 +578,10 @@
 
       if (activePage === 'naskah') {
         modalTitle.innerText = "Akses Edit Naskah";
-        modalDesc.innerText = "Masukkan kode rahasia Naskah.";
+        modalDesc.innerText = "Masukkan kode rahasia Naskah (9999).";
       } else {
         modalTitle.innerText = "Akses Edit Keuangan";
-        modalDesc.innerText = "Masukkan kode rahasia Keuangan.";
+        modalDesc.innerText = "Masukkan kode rahasia Keuangan (0000).";
       }
 
       setTimeout(() => passInput.focus(), 150);
