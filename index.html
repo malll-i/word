@@ -13,7 +13,6 @@
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 
   <style>
-    /* Background Polos Rapih seperti Word */
     body {
       background-color: #f1f5f9;
     }
@@ -99,18 +98,17 @@
     <input type="file" id="image-input" accept="image/*" class="hidden" onchange="handleImageUpload(event)">
   </div>
 
-  <!-- MAIN SCROLLABLE CONTAINER (Kaya Word, Hanya Scroll Kebawah) -->
-  <main id="word-viewport" class="flex-1 overflow-y-auto px-4 py-8 flex flex-col items-center">
-    <div id="doc-card" class="bg-white rounded-xl border border-slate-200 p-6 sm:p-12 shadow-md w-full max-w-[850px] min-h-[80vh]">
+  <!-- MAIN SCROLLABLE CONTAINER (Model Word Tampilan HP & PC) -->
+  <main id="word-viewport" class="flex-1 overflow-y-auto px-4 py-6 flex flex-col items-center">
+    <div id="doc-card" class="bg-white rounded-xl border border-slate-200 p-5 sm:p-12 shadow-md w-full max-w-[850px] min-h-[80vh]">
       
       <!-- Document Title -->
       <div id="doc-title" contenteditable="false" placeholder="Judul Dokumen..." class="text-2xl sm:text-3xl font-extrabold text-slate-900 outline-none mb-6 border-b border-transparent focus:border-slate-200 pb-2">
         Dokumen Bersama
       </div>
       
-      <!-- Document Body Content (Tanpa Bocoran Kode) -->
+      <!-- Document Body Content (Kosong & Bersih) -->
       <div id="doc-editor" contenteditable="false" placeholder="Mulai mengetik di sini..." class="text-slate-700 text-sm sm:text-base leading-relaxed outline-none min-h-[60vh]">
-        <p><br></p>
       </div>
 
     </div>
@@ -124,7 +122,7 @@
           <i data-lucide="key-round" class="w-5 h-5"></i>
         </div>
         <h3 class="text-base font-bold text-slate-900">Akses Mode Edit</h3>
-        <p class="text-xs text-slate-500 mt-1">Masukkan kode rahasia untuk mulai mengedit.</p>
+        <p class="text-xs text-slate-500 mt-1">Masukkan kode keamanan untuk mengedit.</p>
       </div>
 
       <div class="space-y-3">
@@ -149,7 +147,7 @@
   <script>
     lucide.createIcons();
 
-    // KONFIGURASI FIREBASE REALTIME DATABASE ANDA
+    // KONFIGURASI FIREBASE
     const firebaseConfig = {
       apiKey: "AIzaSyCanbPKgL9lWVcahv543bnFKrigKUunFze",
       authDomain: "word-b7629.firebaseapp.com",
@@ -185,41 +183,42 @@
     const passInput = document.getElementById('passcode-input');
     const authError = document.getElementById('auth-error');
 
-    // Real-Time Listener Realtime Database
+    // Real-Time Listener (Aktif Otomatis untuk Mode Lihat Maupun Mode Edit)
     if (isCloudConnected && dbRef) {
-      dbRef.on('value', (snapshot) => {
-        const data = snapshot.val();
-        if (data) {
-          if (!isLocalUpdating) {
-            if (data.title !== undefined && docTitle.innerText !== data.title) {
-              docTitle.innerText = data.title;
-            }
-            if (data.content !== undefined && docEditor.innerHTML !== data.content) {
-              docEditor.innerHTML = data.content;
-            }
-          }
+      // Pantau status koneksi socket Firebase
+      const connectedRef = firebase.database().ref('.info/connected');
+      connectedRef.on('value', (snap) => {
+        if (snap.val() === true) {
           updateSyncStatus('Live Sync Online', 'emerald');
         } else {
-          saveToCloud("Dokumen Bersama", "<p><br></p>");
+          updateSyncStatus('Menghubungkan...', 'amber');
         }
-      }, (error) => {
-        updateSyncStatus('Mode Lokal Offline', 'amber');
+      });
+
+      // Dengarkan perubahan data dari siapapun
+      dbRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        if (data && !isLocalUpdating) {
+          if (data.title !== undefined && docTitle.innerText !== data.title) {
+            docTitle.innerText = data.title;
+          }
+          if (data.content !== undefined && docEditor.innerHTML !== data.content) {
+            docEditor.innerHTML = data.content;
+          }
+        }
       });
     } else {
-      updateSyncStatus('Mode Lokal', 'amber');
+      updateSyncStatus('Mode Lokal Offline', 'amber');
     }
 
     function saveToCloud(title, content) {
       if (!isEditMode) return;
       if (isCloudConnected && dbRef) {
-        updateSyncStatus('Menyimpan...', 'amber');
         dbRef.set({
           title: title,
           content: content,
           updatedAt: Date.now()
-        })
-        .then(() => updateSyncStatus('Live Sync Online', 'emerald'))
-        .catch(() => updateSyncStatus('Gagal Simpan', 'rose'));
+        });
       }
     }
 
