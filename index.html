@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Live Collaborative Workspace</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+  <style>
+    /* Infinite Canvas Background Grid */
+    .infinite-grid {
+      background-size: 30px 30px;
+      background-image: 
+        linear-gradient(to right, rgba(226, 232, 240, 0.6) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(226, 232, 240, 0.6) 1px, transparent 1px);
+    }
+    
+    /* Rich Text Editor Placeholder */
+    [contenteditable]:empty:before {
+      content: attr(placeholder);
+      color: #9ca3af;
+      pointer-events: none;
+      display: block;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+
+    .canvas-card {
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+    }
+  </style>
+</head>
+<body class="bg-slate-100 font-sans text-slate-800 antialiased h-screen overflow-hidden flex flex-col select-none">
+
+  <!-- TOP NAVBAR -->
+  <header class="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between z-30 shrink-0 shadow-sm">
+    <div class="flex items-center space-x-3">
+      <div class="p-2 bg-indigo-600 rounded-lg text-white">
+        <i data-lucide="file-text" class="w-5 h-5"></i>
+      </div>
+      <div>
+        <h1 class="font-bold text-slate-900 text-lg leading-tight">Live Workspace</h1>
+        <div class="flex items-center space-x-2 text-xs text-slate-500">
+          <span id="sync-status" class="flex items-center text-amber-600 font-medium">
+            <span class="w-2 h-2 rounded-full bg-amber-500 mr-1.5 animate-pulse"></span>
+            Menghubungkan...
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex items-center space-x-3">
+      <!-- Status Badge -->
+      <div id="mode-badge" class="px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200 flex items-center">
+        <i data-lucide="eye" class="w-3.5 h-3.5 mr-1.5"></i>
+        Mode Lihat Saja (Read-Only)
+      </div>
+
+      <!-- Auth Button -->
+      <button id="btn-auth" onclick="toggleAuthModal()" class="flex items-center px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-sm font-medium transition duration-200 shadow-sm">
+        <i data-lucide="lock" class="w-4 h-4 mr-2"></i>
+        <span id="btn-auth-text">Masukkan Kode Edit</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- WORKSPACE TOOLBAR (Only enabled in EDIT mode) -->
+  <div id="editor-toolbar" class="bg-white border-b border-slate-200 px-6 py-2 flex items-center justify-between text-slate-400 pointer-events-none opacity-50 transition-all z-20">
+    <div class="flex items-center space-x-1">
+      <button onclick="execCmd('bold')" title="Cetak Tebal (Ctrl+B)" class="p-2 hover:bg-slate-100 rounded text-slate-700 transition">
+        <i data-lucide="bold" class="w-4 h-4"></i>
+      </button>
+      <button onclick="execCmd('italic')" title="Cetak Miring (Ctrl+I)" class="p-2 hover:bg-slate-100 rounded text-slate-700 transition">
+        <i data-lucide="italic" class="w-4 h-4"></i>
+      </button>
+      <button onclick="execCmd('underline')" title="Garis Bawah (Ctrl+U)" class="p-2 hover:bg-slate-100 rounded text-slate-700 transition">
+        <i data-lucide="underline" class="w-4 h-4"></i>
+      </button>
+      <div class="h-4 w-px bg-slate-200 mx-1"></div>
+      <button onclick="execCmd('insertUnorderedList')" title="Daftar Bullet" class="p-2 hover:bg-slate-100 rounded text-slate-700 transition">
+        <i data-lucide="list" class="w-4 h-4"></i>
+      </button>
+      <button onclick="execCmd('insertOrderedList')" title="Daftar Angka" class="p-2 hover:bg-slate-100 rounded text-slate-700 transition">
+        <i data-lucide="list-ordered" class="w-4 h-4"></i>
+      </button>
+      <div class="h-4 w-px bg-slate-200 mx-1"></div>
+      <button onclick="triggerImageUpload()" title="Sisipkan Gambar" class="p-2 hover:bg-slate-100 rounded text-slate-700 transition flex items-center space-x-1 text-xs font-medium text-slate-700">
+        <i data-lucide="image" class="w-4 h-4"></i>
+        <span>Tambah Gambar</span>
+      </button>
+      <input type="file" id="image-input" accept="image/*" class="hidden" onchange="handleImageUpload(event)">
+    </div>
+
+    <div class="flex items-center space-x-2 text-xs text-slate-400">
+      <i data-lucide="move" class="w-3.5 h-3.5"></i>
+      <span>Geser Canvas: Tahan Spasi / Tombol Mouse Tengah + Drag</span>
+    </div>
+  </div>
+
+  <!-- MAIN INFINITE CANVAS CONTAINER -->
+  <main id="canvas-viewport" class="flex-1 relative overflow-hidden infinite-grid cursor-grab active:cursor-grabbing">
+    <!-- Transform Layer for Pan & Zoom -->
+    <div id="canvas-transform" class="absolute inset-0 origin-top-left" style="transform: translate(0px, 0px) scale(1);">
+      
+      <!-- Infinite Paper/Document Area -->
+      <div id="doc-card" class="canvas-card absolute bg-white rounded-xl border border-slate-200 p-10 md:p-14 min-w-[750px] min-h-[950px] w-[800px] left-1/2 top-12 -translate-x-1/2 transition-shadow duration-300">
+        <!-- Document Title -->
+        <div id="doc-title" contenteditable="false" placeholder="Judul Dokumen..." class="text-3xl font-extrabold text-slate-900 outline-none mb-6 border-b border-transparent focus:border-slate-200 pb-2">
+          Dokumen Bersama
+        </div>
+        
+        <!-- Document Body Content -->
+        <div id="doc-editor" contenteditable="false" placeholder="Mulai mengetik di sini..." class="text-slate-700 text-base leading-relaxed outline-none min-h-[700px]">
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Zoom & Canvas Controls Overlay -->
+    <div class="absolute bottom-6 right-6 bg-white/90 backdrop-blur border border-slate-200 rounded-lg shadow-lg flex items-center space-x-1 p-1.5 z-20">
+      <button onclick="zoomOut()" class="p-2 hover:bg-slate-100 rounded text-slate-600"><i data-lucide="minus" class="w-4 h-4"></i></button>
+      <span id="zoom-level" class="text-xs font-semibold px-2 min-w-[45px] text-center text-slate-700">100%</span>
+      <button onclick="zoomIn()" class="p-2 hover:bg-slate-100 rounded text-slate-600"><i data-lucide="plus" class="w-4 h-4"></i></button>
+      <div class="h-4 w-px bg-slate-200 mx-1"></div>
+      <button onclick="resetView()" class="p-2 hover:bg-slate-100 rounded text-slate-600" title="Reset Tampilan"><i data-lucide="rotate-ccw" class="w-4 h-4"></i></button>
+    </div>
+  </main>
+
+  <!-- AUTH MODAL (PASSCODE) -->
+  <div id="auth-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-xl shadow-2xl border border-slate-100 p-6 w-full max-w-sm transform transition-all">
+      <div class="text-center mb-5">
+        <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-3">
+          <i data-lucide="key-round" class="w-6 h-6"></i>
+        </div>
+        <h3 class="text-lg font-bold text-slate-900">Akses Mode Edit</h3>
+        <p class="text-xs text-slate-500 mt-1">Masukkan kode keamanan 4-digit untuk membuka akses mengedit dokumen ini secara real-time.</p>
+      </div>
+
+      <form onsubmit="verifyPasscode(event)" class="space-y-4">
+        <div>
+          <input type="password" id="passcode-input" maxlength="10" placeholder="Masukkan Kode (e.g. 1111)" class="w-full px-4 py-2.5 text-center text-lg tracking-widest font-mono border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+          <p id="auth-error" class="text-xs text-rose-500 text-center mt-1 hidden">Kode salah! Silakan coba lagi.</p>
+        </div>
+
+        <div class="flex space-x-2">
+          <button type="button" onclick="toggleAuthModal()" class="w-1/2 py-2.5 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition">
+            Batal
+          </button>
+          <button type="submit" class="w-1/2 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition shadow-sm">
+            Verifikasi
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT LOGIC -->
+  <script>
+    // Initialize Lucide icons
+    lucide.createIcons();
+
+    // -------------------------------------------------------------
+    // 1. FIREBASE CONFIGURATION (IN-MEMORY / DEMO REAL-TIME)
+    // -------------------------------------------------------------
+    // Firebase Config (Menggunakan Firebase Cloud Firestore publik)
+    const firebaseConfig = {
+      apiKey: "AIzaSyDemoKeyForRealtimeDocumentApp",
+      authDomain: "workspace-collaboration.firebaseapp.com",
+      projectId: "workspace-collaboration",
+      storageBucket: "workspace-collaboration.appspot.com",
+      messagingSenderId: "1234567890",
+      appId: "1:1234567890:web:abcdef123456"
+    };
+
+    let isCloudConnected = false;
+    let docRef = null;
+
+    try {
+      firebase.initializeApp(firebaseConfig);
+      const db = firebase.firestore();
+      // Menggunakan koleksi dokumen publik 'live_workspace'
+      docRef = db.collection('documents').doc('shared_document_1111');
+      isCloudConnected = true;
+    } catch (e) {
+      console.warn("Firebase Init fallback setup:", e);
+    }
+
+    // -------------------------------------------------------------
+    // 2. APP STATE & APP VARIABLES
+    // -------------------------------------------------------------
+    const SECRET_CODE = "1111";
+    let isEditMode = false;
+    let isLocalUpdating = false;
+
+    const docTitle = document.getElementById('doc-title');
+    const docEditor = document.getElementById('doc-editor');
+    const syncStatus = document.getElementById('sync-status');
+    const modeBadge = document.getElementById('mode-badge');
+    const btnAuthText = document.getElementById('btn-auth-text');
+    const editorToolbar = document.getElementById('editor-toolbar');
+
+    // -------------------------------------------------------------
+    // 3. REAL-TIME SYNCHRONIZATION LOGIC
+    // -------------------------------------------------------------
+    // Inisialisasi Listener Firestore untuk sinkronisasi Real-Time
+    if (isCloudConnected && docRef) {
+      docRef.onSnapshot((doc) => {
+        if (doc.exists) {
+          const data = doc.data();
+          
+          // Update konten secara live jika tidak sedang diisi oleh pengetikan lokal sendiri
+          if (!isLocalUpdating) {
+            if (data.title !== undefined && docTitle.innerText !== data.title) {
+              docTitle.innerText = data.title;
+            }
+            if (data.content !== undefined && docEditor.innerHTML !== data.content) {
+              docEditor.innerHTML = data.content;
+            }
+          }
+
+          updateSyncStatus('Terhubung & Real-Time', 'emerald');
+        } else {
+          // Buat data awal jika dokumen baru
+          saveToCloud("Dokumen Bersama", "<p>Selamat datang! Masukkan kode <b>1111</b> untuk mulai mengedit dokumen ini bersama-sama secara real-time.</p>");
+        }
+      }, (error) => {
+        console.error("Snapshot error:", error);
+        updateSyncStatus('Mode Offline (Lokal)', 'amber');
+      });
+    } else {
+      updateSyncStatus('Mode Simulasi Lokal', 'amber');
+    }
+
+    // Fungsi menyimpan perubahan ke database cloud
+    function saveToCloud(title, content) {
+      if (!isEditMode || !docRef) return;
+      
+      updateSyncStatus('Menyimpan...', 'amber');
+      
+      docRef.set({
+        title: title,
+        content: content,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true })
+      .then(() => {
+        updateSyncStatus('Terhubung & Real-Time', 'emerald');
+      })
+      .catch((err) => {
+        console.error("Save error:", err);
+        updateSyncStatus('Gagal Menyimpan', 'rose');
+      });
+    }
+
+    // Event Input Listener untuk Real-time Broadcast
+    function setupEditorListeners() {
+      const handleInput = () => {
+        if (!isEditMode) return;
+        isLocalUpdating = true;
+        saveToCloud(docTitle.innerText, docEditor.innerHTML);
+        
+        setTimeout(() => {
+          isLocalUpdating = false;
+        }, 300);
+      };
+
+      docTitle.addEventListener('input', handleInput);
+      docEditor.addEventListener('input', handleInput);
+    }
+    setupEditorListeners();
+
+    function updateSyncStatus(text, color) {
+      let colorClass = 'text-amber-600';
+      let bgClass = 'bg-amber-500';
+
+      if (color === 'emerald') {
+        colorClass = 'text-emerald-600';
+        bgClass = 'bg-emerald-500';
+      } else if (color === 'rose') {
+        colorClass = 'text-rose-600';
+        bgClass = 'bg-rose-500';
+      }
+
+      syncStatus.className = `flex items-center font-medium ${colorClass}`;
+      syncStatus.innerHTML = `<span class="w-2 h-2 rounded-full ${bgClass} mr-1.5 animate-pulse"></span>${text}`;
+    }
+
+    // -------------------------------------------------------------
+    // 4. AUTHENTICATION & ACCESS CONTROL (KODE: 1111)
+    // -------------------------------------------------------------
+    function toggleAuthModal() {
+      const modal = document.getElementById('auth-modal');
+      const input = document.getElementById('passcode-input');
+      const error = document.getElementById('auth-error');
+
+      if (isEditMode) {
+        // Switch to Read-Only Mode
+        setEditMode(false);
+      } else {
+        // Show passcode modal
+        modal.classList.toggle('hidden');
+        if (!modal.classList.contains('hidden')) {
+          input.value = '';
+          error.classList.add('hidden');
+          input.focus();
+        }
+      }
+    }
+
+    function verifyPasscode(e) {
+      e.preventDefault();
+      const input = document.getElementById('passcode-input').value;
+      const error = document.getElementById('auth-error');
+
+      if (input === SECRET_CODE) {
+        setEditMode(true);
+        toggleAuthModal();
+      } else {
+        error.classList.remove('hidden');
+      }
+    }
+
+    function setEditMode(enabled) {
+      isEditMode = enabled;
+
+      if (enabled) {
+        // Mode Edit Aktif
+        docTitle.contentEditable = "true";
+        docEditor.contentEditable = "true";
+
+        modeBadge.className = "px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200 flex items-center";
+        modeBadge.innerHTML = `<i data-lucide="edit-3" class="w-3.5 h-3.5 mr-1.5"></i> Mode Edit (Aktif)`;
+
+        btnAuthText.innerText = "Kunci (Keluar Mode Edit)";
+        editorToolbar.classList.remove('pointer-events-none', 'opacity-50');
+      } else {
+        // Mode Read-Only Aktif
+        docTitle.contentEditable = "false";
+        docEditor.contentEditable = "false";
+
+        modeBadge.className = "px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200 flex items-center";
+        modeBadge.innerHTML = `<i data-lucide="eye" class="w-3.5 h-3.5 mr-1.5"></i> Mode Lihat Saja (Read-Only)`;
+
+        btnAuthText.innerText = "Masukkan Kode Edit";
+        editorToolbar.classList.add('pointer-events-none', 'opacity-50');
+      }
+      lucide.createIcons();
+    }
+
+    // -------------------------------------------------------------
+    // 5. RICH TEXT EDITOR FUNCTIONS
+    // -------------------------------------------------------------
+    function execCmd(command, value = null) {
+      if (!isEditMode) return;
+      document.execCommand(command, false, value);
+      docEditor.focus();
+      saveToCloud(docTitle.innerText, docEditor.innerHTML);
+    }
+
+    function triggerImageUpload() {
+      if (!isEditMode) return;
+      document.getElementById('image-input').click();
+    }
+
+    function handleImageUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        const imgHtml = `<div class="my-4 my-2"><img src="${event.target.result}" class="max-w-full h-auto rounded-lg shadow-md border border-slate-200 my-2 inline-block resize" alt="Uploaded Image" /></div><p><br></p>`;
+        execCmd('insertHTML', imgHtml);
+      };
+      reader.readAsDataURL(file);
+      e.target.value = '';
+    }
+
+    // -------------------------------------------------------------
+    // 6. INFINITE CANVAS PAN & ZOOM LOGIC
+    // -------------------------------------------------------------
+    const viewport = document.getElementById('canvas-viewport');
+    const transformLayer = document.getElementById('canvas-transform');
+    const zoomLevelEl = document.getElementById('zoom-level');
+
+    let scale = 1;
+    let panX = 0;
+    let panY = 0;
+    let isPanning = false;
+    let startX = 0;
+    let startY = 0;
+    let isSpacePressed = false;
+
+    // Center canvas initially
+    window.addEventListener('load', () => {
+      resetView();
+    });
+
+    function updateTransform() {
+      transformLayer.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
+      zoomLevelEl.innerText = `${Math.round(scale * 100)}%`;
+    }
+
+    function zoomIn() {
+      scale = Math.min(scale + 0.1, 2.5);
+      updateTransform();
+    }
+
+    function zoomOut() {
+      scale = Math.max(scale - 0.1, 0.4);
+      updateTransform();
+    }
+
+    function resetView() {
+      scale = 1;
+      panX = 0;
+      panY = 0;
+      updateTransform();
+    }
+
+    // Wheel Zoom
+    viewport.addEventListener('wheel', (e) => {
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+        const zoomDelta = e.deltaY < 0 ? 0.05 : -0.05;
+        scale = Math.min(Math.max(scale + zoomDelta, 0.4), 2.5);
+        updateTransform();
+      } else {
+        // Pan with scroll
+        panX -= e.deltaX;
+        panY -= e.deltaY;
+        updateTransform();
+      }
+    }, { passive: false });
+
+    // Track Space key for Pan tool
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'Space' && document.activeElement !== docEditor && document.activeElement !== docTitle) {
+        isSpacePressed = true;
+        viewport.classList.add('cursor-grab');
+      }
+    });
+
+    window.addEventListener('keyup', (e) => {
+      if (e.code === 'Space') {
+        isSpacePressed = false;
+      }
+    });
+
+    // Mouse Dragging / Panning
+    viewport.addEventListener('mousedown', (e) => {
+      // Middle click or Left click with Space or background click
+      if (e.button === 1 || isSpacePressed || e.target === viewport || e.target === transformLayer) {
+        isPanning = true;
+        startX = e.clientX - panX;
+        startY = e.clientY - panY;
+        viewport.classList.remove('cursor-grab');
+        viewport.classList.add('cursor-grabbing');
+      }
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!isPanning) return;
+      panX = e.clientX - startX;
+      panY = e.clientY - startY;
+      updateTransform();
+    });
+
+    window.addEventListener('mouseup', () => {
+      if (isPanning) {
+        isPanning = false;
+        viewport.classList.remove('cursor-grabbing');
+        viewport.classList.add('cursor-grab');
+      }
+    });
+  </script>
+</body>
+</html>
